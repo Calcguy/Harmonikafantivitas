@@ -105,7 +105,7 @@
       Harmonikafantivitas er bandet, der bringer glæde og fest til enhver lejlighed. Vi leverer musik, der får
       folk op af stolene – jo flere bajer, jo bajre!
     </p>
-    <img src="Skærmbillede%202024-12-15%20201716.png"" alt="Bandbillede af Harmonikafantivitas">
+    <img src="Skærmbillede%202024-12-15%20201716.png" alt="Bandbillede af Harmonikafantivitas">
   </section>
   <!-- Booking -->
   <section id="booking">
@@ -251,9 +251,18 @@
         requestAnimationFrame(gameLoop);
     }
 
-    // Control bird jump
+    // Control bird jump for desktop
     window.addEventListener("keydown", () => {
         velocity = jump; // Apply upward force
+    });
+
+    // Control bird jump for mobile (touch and click)
+    window.addEventListener("touchstart", () => {
+        velocity = jump;
+    });
+
+    canvas.addEventListener("click", () => {
+        velocity = jump;
     });
 
     // Start game after bird image loads
