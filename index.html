@@ -83,6 +83,22 @@
       background: url('Skærmbillede 2024-12-15 201716.png') no-repeat center center;
       background-size: cover;
     }
+    .score {
+      position: absolute;
+      top: 10px;
+      left: 10px;
+      font-size: 20px;
+      font-weight: bold;
+      color: #fff;
+    }
+    .high-score {
+      position: absolute;
+      top: 10px;
+      right: 10px;
+      font-size: 20px;
+      font-weight: bold;
+      color: #ffd700;
+    }
   </style>
 </head>
 <body>
@@ -139,6 +155,8 @@
     <p>!!Prøv for satan da vores Flappy Fantivitas, Tryk space på pc, find selv ud af det på din telefon, det har jeg sku lige glemt...!!!</p>
     <div class="game-container">
       <canvas id="flappyCanvas" width="600" height="400"></canvas>
+      <div class="score">Score: 0</div>
+      <div class="high-score">Rekord: 0</div>
     </div>
   </section>
   <!-- Footer -->
@@ -151,121 +169,98 @@
     const canvas = document.getElementById("flappyCanvas");
     const ctx = canvas.getContext("2d");
 
-    // Assets
-    const birdImage = new Image();
-    birdImage.src = 'Skærmbillede 2024-12-16 182606.png'; // Fuglen
-    const pipeImage = new Image();
-    pipeImage.src = 'Skærmbillede 2024-12-16 182711.png'; // Forhindringer
+    const scoreElement = document.querySelector(".score");
+    const highScoreElement = document.querySelector(".high-score");
 
-    // Bird position and physics
+    let birdImage = new Image();
+    birdImage.src = 'Skærmbillede 2024-12-16 182606.png';
+    let pipeImage = new Image();
+    pipeImage.src = 'Skærmbillede 2024-12-16 182711.png';
+
     let birdY = canvas.height / 2;
     let birdX = 100;
-    let gravity = 0.5;
+    let gravity = 0.3;
     let velocity = 0;
-    let jump = -8;
+    let jump = -6;
 
-    // Pipes
     let pipes = [];
     let pipeGap = 150;
     let pipeWidth = 40;
     let frame = 0;
+    let score = 0;
+    let highScore = 0;
 
-    // Spawn pipes at random positions
     function spawnPipe() {
-        let topHeight = Math.random() * (canvas.height - pipeGap - 50) + 20;
-        pipes.push({
-            x: canvas.width,
-            top: topHeight,
-            bottom: topHeight + pipeGap
-        });
+      let topHeight = Math.random() * (canvas.height - pipeGap - 50) + 20;
+      pipes.push({
+        x: canvas.width,
+        top: topHeight,
+        bottom: topHeight + pipeGap
+      });
     }
 
-    // Draw the bird
     function drawBird() {
-        ctx.drawImage(birdImage, birdX, birdY, 60, 60);
+      ctx.drawImage(birdImage, birdX, birdY, 50, 50);
     }
 
-    // Draw pipes
     function drawPipes() {
-        pipes.forEach(pipe => {
-            ctx.drawImage(pipeImage, pipe.x, 0, pipeWidth, pipe.top);
-            ctx.drawImage(pipeImage, pipe.x, pipe.bottom, pipeWidth, canvas.height - pipe.bottom);
-        });
+      pipes.forEach(pipe => {
+        ctx.drawImage(pipeImage, pipe.x, 0, pipeWidth, pipe.top);
+        ctx.drawImage(pipeImage, pipe.x, pipe.bottom, pipeWidth, canvas.height - pipe.bottom);
+      });
     }
 
-    // Update pipe positions
     function updatePipes() {
-        pipes.forEach(pipe => {
-            pipe.x -= 3; // Pipes move left
-        });
-
-        // Remove pipes that move off screen
-        if (pipes[0]?.x + pipeWidth < 0) {
-            pipes.shift();
+      pipes.forEach(pipe => {
+        pipe.x -= 3;
+        if (pipe.x + pipeWidth === birdX) {
+          score++;
+          scoreElement.textContent = `Score: ${score}`;
         }
-
-        // Spawn new pipes at intervals
-        if (frame % 100 === 0) {
-            spawnPipe();
-        }
+      });
+      if (pipes[0]?.x + pipeWidth < 0) pipes.shift();
+      if (frame % 100 === 0) spawnPipe();
     }
 
-    // Check for collisions
     function collision() {
-        if (birdY <= 0 || birdY + 40 >= canvas.height) return true; // Bird hits ground or top
-
-        return pipes.some(pipe =>
-            birdX < pipe.x + pipeWidth &&
-            birdX + 40 > pipe.x &&
-            (birdY < pipe.top || birdY + 40 > pipe.bottom) // Bird hits pipe
-        );
+      if (birdY <= 0 || birdY + 40 >= canvas.height) return true;
+      return pipes.some(pipe =>
+        birdX < pipe.x + pipeWidth &&
+        birdX + 40 > pipe.x &&
+        (birdY < pipe.top || birdY + 40 > pipe.bottom)
+      );
     }
 
-    // Reset the game
     function resetGame() {
-        pipes = [];
-        birdY = canvas.height / 2;
-        velocity = 0;
-        frame = 0;
+      pipes = [];
+      birdY = canvas.height / 2;
+      velocity = 0;
+      frame = 0;
+      highScore = Math.max(highScore, score);
+      highScoreElement.textContent = `Rekord: ${highScore}`;
+      score = 0;
+      scoreElement.textContent = `Score: ${score}`;
     }
 
-    // Game loop
     function gameLoop() {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      drawBird();
+      drawPipes();
+      updatePipes();
 
-        drawBird();
-        drawPipes();
-        updatePipes();
+      velocity += gravity;
+      birdY += velocity;
 
-        // Apply gravity
-        velocity += gravity;
-        birdY += velocity;
+      if (collision()) resetGame();
 
-        // Check for collisions
-        if (collision()) {
-            resetGame();
-        }
-
-        // Increment frame count
-        frame++;
-        requestAnimationFrame(gameLoop);
+      frame++;
+      requestAnimationFrame(gameLoop);
     }
 
-    // Control bird jump for desktop
-    window.addEventListener("keydown", () => {
-        velocity = jump; // Apply upward force
-    });
+    window.addEventListener("keydown", () => { velocity = jump; });
+    window.addEventListener("touchstart", () => { velocity = jump; });
+    canvas.addEventListener("click", () => { velocity = jump; });
 
-    // Control bird jump for mobile (touch and click)
-    window.addEventListener("touchstart", () => {
-        velocity = jump;
-    });
-
-    canvas.addEventListener("click", () => {
-        velocity = jump;
-    });
-
-    // Start game after bird image loads
     birdImage.onload = () => gameLoop();
   </script>
 </body>
